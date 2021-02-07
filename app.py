@@ -42,7 +42,7 @@ def welcome():
         f"/api/v1.0/stations<br/>"
         f"/api/v1.0/tobs<br/>"
         f"/api/v1.0/&lt;start&gt;<br/>"
-        f"/api/v1.0/<start>/<end>"
+        f"/api/v1.0/&lt;start&gt;/&lt;end&gt;"
     )
 
 # /api/v1.0/precipitation
@@ -108,14 +108,26 @@ def tobs():
 def start_date(start):
     session = Session(bind=engine)
 
-    results = session.query(measurement.date, func.min(measurement.tobs), func.avg(measurement.tobs), func.max(measurement.tobs)).\
+    start_results = session.query(measurement.date, func.min(measurement.tobs), func.avg(measurement.tobs), func.max(measurement.tobs)).\
                         filter(measurement.date >= start).\
                         group_by(measurement.date).all()
 
     session.close()
 
-    return(jsonify(results))
+    return(jsonify(start_results))
 
 # /api/v1.0/<start>/<end>
 # When given the start and the end date, calculate the TMIN, TAVG, and TMAX for dates between 
 # the start and end date inclusive.
+
+@app.route("/api/v1.0/<start>/<end>")
+def start_date_end_date(start, end):
+    session = Session(bind=engine)
+
+    start_end_results = session.query(measurement.date, func.min(measurement.tobs), func.avg(measurement.tobs), func.max(measurement.tobs)).\
+                        filter(measurement.date >= start, measurement.date <= end).\
+                        group_by(measurement.date).all()
+
+    session.close()
+
+    return(jsonify(start_end_results))
