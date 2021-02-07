@@ -1,101 +1,79 @@
-# Now that you have completed your initial analysis, design a Flask API based on the queries that you have just developed.
+# Now that you have completed your initial analysis, design a Flask API 
+# based on the queries that you have just developed.
 
-# Use Flask to create your routes.
+# Set up Dependencies 
+import numpy as np
+import sqlalchemy
+from sqlalchemy.ext.automap import automap_base
+from sqlalchemy.orm import Session
+from sqlalchemy import create_engine, func
+from flask import Flask, jsonify
+
+# Flask Setup
+from flask import Flask, jsonify
+app = Flask(__name__)
+
+# create engine to hawaii.sqlite
+engine = create_engine("sqlite:///Resources/hawaii.sqlite")
+
+# reflect an existing database into a new model
+Base = automap_base() 
+
+# reflect the tables
+Base.prepare(engine, reflect=True) 
+
+# Save references to each table
+measurement = Base.classes.measurement
+station = Base.classes.station
+
+#################################################
+# Flask Routes
+#################################################
 
 # /
-
-
-# Home page.
-
-
-# List all routes that are available.
-
-
-
+# Home page
+# List all routes that are available
+@app.route("/")
+def welcome():
+    return (
+        f"Welcome to Shadee's Climate App!<br/>"
+        f"Available Routes:<br/>"
+        f"/api/v1.0/precipitation<br/>"
+        f"/api/v1.0/stations<br/>"
+        f"/api/v1.0/tobs"
+    )
 
 # /api/v1.0/precipitation
-
-
 # Convert the query results to a dictionary using date as the key and prcp as the value.
-
-
 # Return the JSON representation of your dictionary.
+@app.route("/")
+def welcome():
+    return (
+        f"Welcome to Shadee's Climate App!<br/>"
+        f"Available Routes:<br/>"
+        f"/api/v1.0/precipitation<br/>"
+        f"/api/v1.0/stations<br/>"
+        f"/api/v1.0/tobs"
 
 
 
 
 # /api/v1.0/stations
-
 # Return a JSON list of stations from the dataset.
 
-
-
 # /api/v1.0/tobs
-
-
 # Query the dates and temperature observations of the most active station for the last year of data.
-
-
 # Return a JSON list of temperature observations (TOBS) for the previous year.
 
 
 
 
 # /api/v1.0/<start> and /api/v1.0/<start>/<end>
-
-
 # Return a JSON list of the minimum temperature, the average temperature, and the max temperature for a given start or start-end range.
-
-
 # When given the start only, calculate TMIN, TAVG, and TMAX for all dates greater than and equal to the start date.
-
-
 # When given the start and the end date, calculate the TMIN, TAVG, and TMAX for dates between the start and end date inclusive.
 
 
-
-
-
-
-
-from flask import Flask, jsonify
-
-justice_league_members = [
-    {"superhero": "Aquaman", "real_name": "Arthur Curry"},
-    {"superhero": "Batman", "real_name": "Bruce Wayne"},
-    {"superhero": "Cyborg", "real_name": "Victor Stone"},
-    {"superhero": "Flash", "real_name": "Barry Allen"},
-    {"superhero": "Green Lantern", "real_name": "Hal Jordan"},
-    {"superhero": "Superman", "real_name": "Clark Kent/Kal-El"},
-    {"superhero": "Wonder Woman", "real_name": "Princess Diana"}
-]
-
-#################################################
-# Flask Setup
-#################################################
-app = Flask(__name__)
-
-
-#################################################
-# Flask Routes
-#################################################
-
-@app.route("/api/v1.0/justice-league")
-def justice_league():
-    """Return the justice league data as json"""
-
-    return jsonify(justice_league_members)
-
-
-@app.route("/")
-def welcome():
-    return (
-        f"Welcome to the Justice League API!<br/>"
-        f"Available Routes:<br/>"
-        f"/api/v1.0/justice-league<br/>"
-        f"/api/v1.0/justice-league/superhero/batman<br/>"
-        f"/api/v1.0/justice-league/real_name/bruce%20wayne"
-    )
 
 
 @app.route("/api/v1.0/justice-league/real_name/<real_name>")
