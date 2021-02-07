@@ -40,71 +40,82 @@ def welcome():
         f"Available Routes:<br/>"
         f"/api/v1.0/precipitation<br/>"
         f"/api/v1.0/stations<br/>"
-        f"/api/v1.0/tobs"
+        f"/api/v1.0/tobs<br/>"
+        f"/api/v1.0/&lt;start&gt;<br/>"
+        f"/api/v1.0/<start>/<end>"
     )
 
 # /api/v1.0/precipitation
 # Convert the query results to a dictionary using date as the key and prcp as the value.
 # Return the JSON representation of your dictionary.
-@app.route("/")
-def welcome():
-    return (
-        f"Welcome to Shadee's Climate App!<br/>"
-        f"Available Routes:<br/>"
-        f"/api/v1.0/precipitation<br/>"
-        f"/api/v1.0/stations<br/>"
-        f"/api/v1.0/tobs"
+@app.route("/api/v1.0/precipitation")
+def precipitation():
+    session = Session(bind=engine)
+    
+    last_year_data = engine.execute('select * from measurement where date > "2016-08-23"').fetchall() 
+    
+    session.close()
 
+    result = {}
 
+    for value in last_year_data:
+        date = value[2]
+        precipitation = value[3]
+    
+        if precipitation == None:
+            precipitation = 0
+        
+        if date not in result:
+            result[date] = 0
+        
+        result[date] = result[date] + precipitation
 
+    return jsonify(result)
 
 # /api/v1.0/stations
 # Return a JSON list of stations from the dataset.
+@app.route("/api/v1.0/stations")
+def stations():
+    session = Session(bind=engine) 
+
+    active_stations = session.query(station.station).all()
+
+    session.close()
+
+    return jsonify(active_stations)
 
 # /api/v1.0/tobs
 # Query the dates and temperature observations of the most active station for the last year of data.
 # Return a JSON list of temperature observations (TOBS) for the previous year.
+@app.route("/api/v1.0/tobs")
+def tobs():
+    session = Session(bind=engine)
 
+    USC00519281_data = session.query(measurement.date, measurement.tobs).\
+        filter(measurement.station == 'USC00519281').\
+        filter(measurement.date > '2016-08-18').all()
+    
+    session.close()
 
+    return jsonify(USC00519281_data)
 
+# /api/v1.0/<start>
+# Return a JSON list of the minimum temperature, the average temperature, and the max 
+# temperature for a given start or start-end range.
+# When given the start only, calculate TMIN, TAVG, and TMAX for all dates greater than and 
+# equal to the start date.
+@app.route("/api/v1.0/<start>")
+def start_date(start):
+    session = Session(bind=engine)
 
-# /api/v1.0/<start> and /api/v1.0/<start>/<end>
-# Return a JSON list of the minimum temperature, the average temperature, and the max temperature for a given start or start-end range.
-# When given the start only, calculate TMIN, TAVG, and TMAX for all dates greater than and equal to the start date.
-# When given the start and the end date, calculate the TMIN, TAVG, and TMAX for dates between the start and end date inclusive.
+    results = session.query(measurement.date, func.min(measurement.tobs), func.avg(measurement.tobs), func.max(measurement.tobs)).\
+                        filter(measurement.date >= start).\
+                        group_by(measurement.date).all()
 
+    session.close()
 
+    return(jsonify(results))
 
-
-@app.route("/api/v1.0/justice-league/real_name/<real_name>")
-def justice_league_by_real_name(real_name):
-    """Fetch the Justice League character whose real_name matches
-       the path variable supplied by the user, or a 404 if not."""
-
-    canonicalized = real_name.replace(" ", "").lower()
-    for character in justice_league_members:
-        search_term = character["real_name"].replace(" ", "").lower()
-
-        if search_term == canonicalized:
-            return jsonify(character)
-
-    return jsonify({"error": f"Character with real_name {real_name} not found."}), 404
-
-
-@app.route("/api/v1.0/justice-league/superhero/<superhero>")
-def justice_league_by_superhero__name(superhero):
-    """Fetch the Justice League character whose superhero matches
-       the path variable supplied by the user, or a 404 if not."""
-
-    canonicalized = superhero.replace(" ", "").lower()
-    for character in justice_league_members:
-        search_term = character["superhero"].replace(" ", "").lower()
-
-        if search_term == canonicalized:
-            return jsonify(character)
-
-    return jsonify({"error": "Character not found."}), 404
-
-
-if __name__ == "__main__":
-    app.run(debug=True)
+# /api/v1.0/<start>/<end>
+# When given the start and the end date, calculate the TMIN, TAVG, and TMAX for dates between 
+# the start and end date inclusive.
